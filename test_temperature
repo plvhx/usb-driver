@@ -1,0 +1,27 @@
+#! /bin/sh
+
+find_device() {
+	TF=""
+	for file in /sys/bus/usb/drivers/root_usb/*-*; do
+		TF=$file/temperature
+	done
+
+	if [ "x$TF" = "x" ]; then
+		echo "Can't find root_usb device"
+		exit
+	fi
+}
+
+find_device
+
+while `/bin\/true`
+do
+	TEMP=`cat $TF 2>/dev/null`
+	if [ $? -ne 0 ]; then
+		find_device
+	fi
+	TEMP_C=`echo "($TEMP * 0.0078125)" | bc -l`
+	TEMP_F=`echo "(($TEMP * 0.0078125) * (9/5)) + 32 " | bc -l`
+	echo "Temperature = $TEMP_F F		$TEMP_C C"
+	sleep 1s
+done
